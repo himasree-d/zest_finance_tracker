@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Zest — Your finances, under control. Premium personal finance dashboard." />
+    <title>Zest | Personal Finance</title>
+  </head>
+  <body class="bg-charcoal-900 text-slate-100">
+    <div id="error-log" style="color: #f43f5e; padding: 20px; font-family: monospace; z-index: 9999; position: absolute;"></div>
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        document.getElementById('error-log').innerHTML += '<p>Error: ' + message + ' (' + source + ':' + lineno + ')</p>';
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        document.getElementById('error-log').innerHTML += '<p>Unhandled Promise: ' + (event.reason ? event.reason.toString() : 'Unknown') + '</p>';
+      });
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

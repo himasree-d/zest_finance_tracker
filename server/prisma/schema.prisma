@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  password     String
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  transactions    Transaction[]
+  budgets         Budget[]
+  savingsPots     SavingsPot[]
+  recurringBills  RecurringBill[]
+  notifications   Notification[]
+  settings        UserSettings?
+  refreshTokens   RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model Transaction {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  amount      Decimal     @db.Decimal(12, 2)
+  type        TransactionType
+  category    String
+  date        DateTime
+  note        String?
+  merchant    String?
+  budgetId    String?
+  budget      Budget?     @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId, type, date])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Budget {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  category      String
+  monthlyLimit  Decimal  @db.Decimal(12, 2)
+  color         String   @default("#3b82f6")
+  icon          String   @default("💰")
+  rollover      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions  Transaction[]
+
+  @@map("budgets")
+}
+
+model SavingsPot {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  targetAmount    Decimal  @db.Decimal(12, 2)
+  currentAmount   Decimal  @db.Decimal(12, 2) @default(0)
+  targetDate      DateTime?
+  color           String   @default("#3b82f6")
+  icon            String   @default("🏦")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  potTransactions PotTransaction[]
+
+  @@map("savings_pots")
+}
+
+model PotTransaction {
+  id          String          @id @default(cuid())
+  potId       String
+  pot         SavingsPot      @relation(fields: [potId], references: [id], onDelete: Cascade)
+  amount      Decimal         @db.Decimal(12, 2)
+  type        PotTransactionType
+  note        String?
+  createdAt   DateTime        @default(now())
+
+  @@map("pot_transactions")
+}
+
+enum PotTransactionType {
+  ADD
+  WITHDRAW
+}
+
+model RecurringBill {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  amount        Decimal       @db.Decimal(12, 2)
+  category      String
+  frequency     BillFrequency
+  nextDueDate   DateTime
+  lastPaidDate  DateTime?
+  icon          String?
+  color         String        @default("#3b82f6")
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("recurring_bills")
+}
+
+enum BillFrequency {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  BILL_DUE
+  BUDGET_ALERT
+  POT_GOAL_REACHED
+  GENERAL
+}
+
+model UserSettings {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency         String   @default("USD")
+  theme            String   @default("dark")
+  emailNotifications Boolean @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("user_settings")
+}
