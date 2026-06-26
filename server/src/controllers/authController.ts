@@ -26,12 +26,14 @@ function generateRefreshToken(userId: string): string {
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
   const isProd = process.env.NODE_ENV === 'production';
+  // In production (Vercel -> Render), domains are different, so sameSite must be 'none' and secure must be true.
+  // Locally, domains are the same (thanks to Vite proxy), so sameSite 'lax' and secure false works perfectly.
   res.cookie('access_token', accessToken, {
-    httpOnly: true, secure: isProd, sameSite: isProd ? 'strict' : 'lax',
+    httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax',
     maxAge: 15 * 60 * 1000,
   });
   res.cookie('refresh_token', refreshToken, {
-    httpOnly: true, secure: isProd, sameSite: isProd ? 'strict' : 'lax',
+    httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax',
     maxAge: REFRESH_TOKEN_EXPIRY_MS, path: '/api/auth/refresh',
   });
 }
